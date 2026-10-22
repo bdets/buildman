@@ -1,0 +1,128 @@
+rules_version = '2';
+
+// NOTE on get()/exists() quota: every function below reads either
+// /config/superAdmin or /users/{request.auth.uid} — always the exact same
+// path. Firestore caches repeated get()/exists() calls to an identical path
+// within one request, so calling these functions many times in one rule
+// evaluation still only costs 2 real reads, not dozens. This keeps list
+// queries (e.g. staff loading "all members") safely under the per-request
+// get() quota.
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() { return request.auth != null; }
+
+    function isSuperAdmin() {
+      return isSignedIn() &&
+        exists(/databases/$(database)/documents/config/superAdmin) &&
+        get(/databases/$(database)/documents/config/superAdmin).data.uid == request.auth.uid;
+    }
+
+    function hasProfile() {
+      return isSignedIn() && exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function myProfile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isActive() { return hasProfile() && myProfile().active == true; }
+    function isDirector() { return isActive() && myProfile().role == 'director'; }
+    function isAdminRole() { return isActive() && myProfile().role == 'admin'; }
+    function isMember() { return isActive() && myProfile().role == 'member'; }
+
+    // true for superAdmin/director (full access) OR an active admin whose
+    // own `modules` array includes this module name
+    function hasModule(name) {
+      return isSuperAdmin() || isDirector() ||
+        (isAdminRole() && (name in myProfile().modules));
+    }
+
+    function isStaffAny() { return isSuperAdmin() || isDirector() || isAdminRole(); }
+
+    // ---- hidden super admin record: only readable by the matching uid ----
+    match /config/superAdmin {
+      allow get: if isSignedIn() && resource.data.uid == request.auth.uid;
+      allow create: if isSignedIn() && !exists(/databases/$(database)/documents/config/superAdmin);
+      allow update, delete: if isSuperAdmin();
+    }
+
+    // ---- org-wide / app settings (expiry date, name, address, etc.) ----
+    match /config/{doc} {
+      allow read: if true;
+      allow write: if isSuperAdmin() || isDirector();
+    }
+
+    // ---- staff & member accounts ----
+    match /users/{uid} {
+      allow get: if isSignedIn() && (request.auth.uid == uid || isSuperAdmin() || isDirector() || isAdminRole());
+      // listing ALL users (member dropdown on Deposits, and the Shareholders
+      // List / Individual Statement reports) is only given to admins who
+      // actually have the `deposits` or `reports` module — an admin scoped
+      // to, say, only `notices` has no reason to enumerate every account
+      allow list: if isSuperAdmin() || isDirector() ||
+        (isAdminRole() && (('deposits' in myProfile().modules) || ('reports' in myProfile().modules)));
+      allow create: if isSuperAdmin() || isDirector();
+      // staff can update anyone's profile (role/modules/active); a person
+      // can update their own profile but never change their own role/modules
+      allow update: if isSuperAdmin() || isDirector() ||
+        (request.auth.uid == uid &&
+         request.resource.data.role == resource.data.role &&
+         request.resource.data.get('modules', []) == resource.data.get('modules', []));
+      allow delete: if isSuperAdmin() || isDirector();
+    }
+
+    // ---- deposits/installments ----
+    match /deposits/{id} {
+      // `reports` module gets READ ONLY (for the Deposit Summary /
+      // Individual Statement generators) — entering/editing deposits still
+      // requires the `deposits` module specifically
+      allow read: if hasModule('deposits') || hasModule('reports') || (isMember() && resource.data.memberId == request.auth.uid);
+      allow create, update, delete: if hasModule('deposits');
+    }
+
+    // ---- costs/expenses (internal — members never see this) ----
+    match /costs/{id} {
+      allow read: if hasModule('costs') || hasModule('reports');
+      allow create, update, delete: if hasModule('costs');
+    }
+
+    // ---- vouchers & cheques ----
+    match /vouchers/{id} {
+      allow read, write: if hasModule('vouchers');
+    }
+    match /cheques/{id} {
+      allow read, write: if hasModule('vouchers');
+    }
+
+    // ---- notices ----
+    match /notices/{id} {
+      allow read: if hasModule('notices') || isStaffAny() ||
+        (resource.data.status == 'published' &&
+          (resource.data.audience == 'all' || (isMember() && resource.data.audience == 'members')));
+      allow write: if hasModule('notices');
+    }
+
+    // ---- reports (income-expense / cash / assets&liabilities) with
+    //      director-approval gate before members can see them ----
+    match /reports/{id} {
+      allow read: if hasModule('reports') || isDirector() ||
+        (isMember() && resource.data.status == 'approved');
+      allow create: if hasModule('reports');
+      // only a director/superAdmin may change `status` to 'approved'/'rejected'
+      allow update: if isDirector() || isSuperAdmin() ||
+        (hasModule('reports') && request.resource.data.status == resource.data.status);
+      allow delete: if isDirector() || isSuperAdmin();
+    }
+
+    // ---- messages (member -> staff, with staff replies) ----
+    match /messages/{id} {
+      allow read: if hasModule('messages') || isDirector() ||
+        (isMember() && resource.data.fromUid == request.auth.uid);
+      allow create: if isSignedIn();
+      allow update: if hasModule('messages') || isDirector();
+      allow delete: if isDirector() || isSuperAdmin();
+    }
+  }
+}
