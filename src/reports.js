@@ -1,5 +1,4 @@
-import { db } from "./firebase.js";
-import { collection, getDocs, query, where, orderBy, getDoc, doc } from "firebase/firestore";
+import { db, collection, getDocs, query, where, orderBy, getDoc, doc } from "./firebase.js";
 
 /**
  * Pulls members/deposits/costs and computes balances fresh every time —

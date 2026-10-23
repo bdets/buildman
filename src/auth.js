@@ -1,12 +1,17 @@
-import { auth, db, secondaryAuth } from "./firebase.js";
 import {
+  auth,
+  db,
+  secondaryAuth,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
   sendPasswordResetEmail,
   onAuthStateChanged,
   signOut,
-} from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+  doc,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "./firebase.js";
 
 /**
  * Figures out who's signed in and what role they have.

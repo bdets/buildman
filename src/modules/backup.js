@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { collection, getDocs, doc, writeBatch } from "firebase/firestore";
+import { db, collection, getDocs, doc, writeBatch } from "../firebase.js";
 import { toast } from "../utils.js";
 import { t } from "../i18n.js";
 

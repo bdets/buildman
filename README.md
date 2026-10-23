@@ -1,28 +1,50 @@
-# Society Finance App v2 — Offline-first, 4-tier RBAC, GitHub + Firebase
+# Society Finance App v2 — Offline-first, 4-tier RBAC, GitHub Pages + Firebase
 
 This supersedes the earlier plain-HTML template. Same two core modules
 (Deposit/Installment, Cost/Expense) plus Vouchers/Cheques, Notices, and a
 Report-approval workflow — now with a proper 4-tier role system, username +
-password login for everyone, offline-first behavior, and a Vite build so it
-can be hosted on **Firebase Hosting** (not Netlify — see "Why GitHub + Firebase
-only" below) with environment variables injected at build time via GitHub
-Actions.
+password login for everyone, and offline-first behavior. **No build step,
+no npm, no CLI, no commands at all** — plain HTML/CSS/JS, uploaded to
+GitHub and served by GitHub Pages, exactly like the person's other
+GitHub+Firebase projects.
 
-## Why GitHub + Firebase only (no Netlify)
+## Why there's no build step (no Vite, no npm, no commands)
 
-An earlier pass of this project used Netlify for hosting. Netlify and
-**Firebase Hosting** do the exact same job (serve the built static site) —
-running both was never architecturally necessary, it just followed an
-earlier spec that explicitly asked for Netlify. Since the person's other
-projects already run on GitHub + Firebase alone, this version drops Netlify:
-`firebase.json` now points Firebase Hosting at the Vite build output
-(`dist/`), and `firebase init hosting:github` (run once from Cloud Shell —
-see `SETUP-BANGLA.md`) sets up a GitHub Actions workflow that auto-builds
-and auto-deploys on every push to `main`, the same way Netlify's GitHub
-integration did. This isn't a security trade-off either way — if anything,
-removing a third service from the trust chain (GitHub Actions runs entirely
-within GitHub/Firebase, no third party involved) is a slightly smaller
-attack surface than also trusting Netlify with repo access and deploy keys.
+Earlier passes of this project went through three different deploy setups —
+Netlify, then Firebase Hosting with a Vite build and GitHub Actions
+auto-deploy, then a manual `npm run build && firebase deploy` from Cloud
+Shell — each one simpler than the last, but all three still required typed
+commands somewhere. The person's other projects never needed any of that:
+just upload the folder to GitHub, paste the Firebase config into a plain
+JS file, done. So this version drops the build step entirely and goes back
+to that same pattern (matching the original v1 template):
+
+- **Firebase is loaded straight from its CDN** (`src/firebase.js` imports
+  `https://www.gstatic.com/firebasejs/...` URLs directly) instead of the
+  npm `firebase` package — no bundler needed to resolve npm imports.
+- **`src/config.js` replaces `.env`** — the Firebase SDK config and default
+  org info live in one plain, committed JS file instead of an environment
+  variable system that needed a build step to inject. This isn't a security
+  downgrade: a Firebase web SDK config was never a secret to begin with
+  (real security is `firestore.rules` + Firebase Auth) — see the comment at
+  the top of `src/config.js`.
+- **GitHub Pages serves the files as-is** — Settings → Pages → Deploy from
+  branch → done. No Firebase Hosting, no Netlify, no GitHub Actions.
+  Updating the live site is just editing a file on GitHub and committing;
+  Pages republishes automatically within a minute or two.
+- The one extra one-time step this needs that Firebase Hosting wouldn't:
+  adding the `*.github.io` domain to Firebase Auth's **Authorized
+  domains** (see `SETUP-BANGLA.md`), since Firebase only accepts login
+  requests from domains it's told to trust.
+- **The GitHub repo is Public, on purpose.** GitHub Pages on the Free plan
+  only works from a public repo anyway (Private needs GitHub Pro, and even
+  then the *published site* is still public either way — only the repo's
+  code-browsing page would be hidden). None of that matters for this app's
+  actual security: repo visibility has zero bearing on who can read real
+  data. That's entirely Firebase Auth (must log in) + `firestore.rules`
+  (role-scoped reads/writes), both of which run server-side regardless of
+  who can see the client code. `src/config.js` being visible is fine for
+  the same reason it's fine to commit — see the comment at its top.
 
 ## Why these specific architecture choices
 
@@ -41,7 +63,7 @@ attack surface than also trusting Netlify with repo access and deploy keys.
   browser never even downloads other members' deposits, an admin without
   the `vouchers` module never downloads voucher data. No custom filtering
   code needed on top.
-- **Service Worker (`public/sw.js`) caches the app shell** (HTML/CSS/JS)
+- **Service Worker (`sw.js`) caches the app shell** (HTML/CSS/JS)
   only — so the UI itself opens instantly with zero network. Data offline
   support is Firestore's job (above); the service worker's job is just
   "the app loads at all" when there's no signal.
@@ -104,11 +126,12 @@ messages/{id}   { fromUid, fromName, text, status, replies: [...], createdAt }
   management), notices, reports-approval, messages, backup, settings
 - `src/print.js` — A4 PDF statements/reports/vouchers (jsPDF+autotable) and
   80mm thermal receipt printing (browser print dialog)
-- `public/sw.js` + `public/manifest.json` — installable, offline-capable
-  PWA shell (placeholder icons included — swap `public/icons/*.png` for
-  your own logo whenever you like)
-- `.env.example`, `.gitignore`, `netlify.toml` — see `SETUP-BANGLA.md` for
-  the full deploy walkthrough
+- `sw.js` + `manifest.json` (repo root) — installable, offline-capable PWA
+  shell (placeholder icons in `icons/` — swap them for your own logo
+  whenever you like, or just use Settings → the logo upload there is
+  separate and shows in the app itself, not the OS-level install icon)
+- `src/config.js`, `.gitignore` — see `SETUP-BANGLA.md` for the full
+  deploy walkthrough (GitHub Pages, no build step)
 
 ## v2.1 additions
 

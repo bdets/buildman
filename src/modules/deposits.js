@@ -1,5 +1,5 @@
-import { db } from "../firebase.js";
 import {
+  db,
   collection,
   getDocs,
   addDoc,
@@ -9,7 +9,7 @@ import {
   where,
   orderBy,
   serverTimestamp,
-} from "firebase/firestore";
+} from "../firebase.js";
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { printThermalReceipt } from "../print.js";
 import { t, getLang } from "../i18n.js";

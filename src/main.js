@@ -1,8 +1,6 @@
-import { db, auth } from "./firebase.js";
+import { db, auth, createUserWithEmailAndPassword, onAuthStateChanged, signOut, doc, getDoc } from "./firebase.js";
 import { getOrg } from "./org-store.js";
 import { login, requestPasswordReset, claimSuperAdminIfVacant, resolveIdentity } from "./auth.js";
-import { createUserWithEmailAndPassword, onAuthStateChanged, signOut } from "firebase/auth";
-import { doc, getDoc } from "firebase/firestore";
 import { toast } from "./utils.js";
 import { t, getLang, setLang } from "./i18n.js";
 
@@ -101,6 +99,6 @@ document.getElementById("signupLink").addEventListener("click", async (ev) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }

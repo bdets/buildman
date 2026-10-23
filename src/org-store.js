@@ -1,14 +1,14 @@
-import { db, DEFAULT_ORG } from "./firebase.js";
-import { doc, getDoc } from "firebase/firestore";
+import { db, DEFAULT_ORG, doc, getDoc } from "./firebase.js";
 
 let cached = null;
 let inflight = null;
 
 /**
  * Returns the current org info. First call fetches config/org from
- * Firestore (merged over the .env defaults, so a field nobody has set yet
- * still shows something sensible); later calls reuse the cached copy until
- * invalidateOrg() is called (Settings does this right after saving).
+ * Firestore (merged over the defaults in src/config.js, so a field nobody
+ * has set yet still shows something sensible); later calls reuse the
+ * cached copy until invalidateOrg() is called (Settings does this right
+ * after saving).
  */
 export async function getOrg(forceRefresh = false) {
   if (cached && !forceRefresh) return cached;

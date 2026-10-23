@@ -1,8 +1,7 @@
-import { db } from "./firebase.js";
+import { db, collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "./firebase.js";
 import { getOrg } from "./org-store.js";
 import { guardPage, logout } from "./auth.js";
 import { computeOwnMemberSummary } from "./reports.js";
-import { collection, addDoc, getDocs, query, where, orderBy, serverTimestamp } from "firebase/firestore";
 import { money, fmtDate, toast } from "./utils.js";
 import { exportMemberStatementPDF } from "./print.js";
 import { t, getLang, setLang } from "./i18n.js";
@@ -132,6 +131,6 @@ guardPage(["member"], async (identity) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("/sw.js").catch(() => {});
+    navigator.serviceWorker.register("./sw.js").catch(() => {});
   });
 }

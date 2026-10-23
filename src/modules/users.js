@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { collection, getDocs, doc, setDoc, updateDoc, query, orderBy } from "firebase/firestore";
+import { db, collection, getDocs, doc, setDoc, updateDoc, query, orderBy } from "../firebase.js";
 import { createStaffOrMemberAccount, requestPasswordReset } from "../auth.js";
 import { randomPassword, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";

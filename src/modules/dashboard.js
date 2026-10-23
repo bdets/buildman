@@ -1,8 +1,7 @@
 import { computeBalanceSummary } from "../reports.js";
 import { money } from "../utils.js";
 import { exportBalanceReportPDF } from "../print.js";
-import { db } from "../firebase.js";
-import { doc, setDoc } from "firebase/firestore";
+import { db, doc, setDoc } from "../firebase.js";
 import { t, getLang } from "../i18n.js";
 
 export async function render(root) {

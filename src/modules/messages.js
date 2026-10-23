@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { collection, getDocs, updateDoc, doc, query, orderBy } from "firebase/firestore";
+import { db, collection, getDocs, updateDoc, doc, query, orderBy } from "../firebase.js";
 import { fmtDate, toast } from "../utils.js";
 import { t, getLang } from "../i18n.js";
 

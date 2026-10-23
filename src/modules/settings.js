@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db, doc, getDoc, setDoc } from "../firebase.js";
 import { toast, resizeImageToDataUrl } from "../utils.js";
 import { getOrg, invalidateOrg } from "../org-store.js";
 import { updateShellBrand } from "../ui-shell.js";

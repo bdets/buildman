@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "firebase/firestore";
+import { db, collection, getDocs, addDoc, deleteDoc, doc, query, orderBy, serverTimestamp } from "../firebase.js";
 import { money, fmtDate, todayISO, toast, fillDatalist } from "../utils.js";
 import { exportVoucherPDF } from "../print.js";
 import { t } from "../i18n.js";

@@ -1,5 +1,4 @@
-import { db } from "../firebase.js";
-import { collection, getDocs, query, where } from "firebase/firestore";
+import { db, collection, getDocs, query, where } from "../firebase.js";
 import { money, fmtDate, todayISO } from "../utils.js";
 import {
   computeBalanceSummary,
